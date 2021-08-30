@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link th:href="@{/static/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/static/css/main.css}" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="row">
+        <div id="title">
+            <h1>Spring WebFlux + Oauth2 + WebSocket + Redis + Kafka + Thymeleaf</h1>
+            <p>Hello, <label id="greeting">... (Waiting for data)</label></p>
+        </div>
+        
+        <table id="allStudents" class="table table-striped">
+            <thead>
+            <tr>
+                <th width="70%">Name</th>
+                <th>Grade</th>
+            </tr>
+            </thead>
+            <tbody id="data-body">
+            <tr class="result" data-th-each="student : ${students}">
+                <td>[[${student.name}]]</td>
+                <td>[[${student.grade}]]</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+<script th:src="@{/static/js/eventsource-polyfill.js}"></script>
+<script th:src="@{/static/js/jquery-3.6.0.min.js}"></script>
+<script>
+	
+  function connectWs(){
+	  var websocket = new WebSocket('ws://localhost:9000/app/ws/events');
+	  
+	  websocket.onopen = function (event) {
+		  console.log('connect');
+	    };
+	    
+	    websocket.onclose = function(e) {
+	        console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
+	        setTimeout(function() {
+	        	connectWs();
+	        }, 1000);
+	      };
+
+	      websocket.onerror = function(err) {
+	        console.error('Socket encountered error: ', err.message, 'Closing socket');
+	        ws.close();
+	      };
+	  
+	 websocket.addEventListener('message', function (e) {
+		 console.log(e.data);
+		 
+		 var data = JSON.parse(e.data);
+		 
+		 $("#greeting").text('welcome ' + data.body.name);
+         
+         insertRow(data.body);
+	  });
+	  
+	  
+  }
+  
+  var keepAliveTimer = null;
+  
+  var source = EventSourcePolyfill;
+
+  function gotActivity(){
+    if(keepAliveTimer != null)clearTimeout(keepAliveTimer);
+    keepAliveTimer = setTimeout(connect, 30 * 1000);
+  }
+  
+  function connectSse() {
+	  gotActivity();
+	  
+	  var authorizationToken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdWJqZWN0IiwiaWF0IjoxNTE2MjM5MDIyfQ.eB2c9xtg5wcCZxZ-o-sH4Mx1JGkqAZwH4_WS0UcDbj_nen0NPBj6CqOEPhr_LZDagb4mM6HoAPJywWWG8b_Ylnn5r2gWDzib2mb0kxIuAjnvVBrpzusw4ItTVvP_srv2DrwcisKYiKqU5X_3ka7MSVvKtswdLY3RXeCJ_S2W9go"
+	  
+	  source = new EventSourcePolyfill("http://localhost:9000/app/stream/students", { // -- native lib doesn't support send header
+          headers: {
+              'Authorization': 'Bearer ' + authorizationToken
+          }
+      });	  
+      // source = new EventSourcePolyfill("http://localhost:9000/app/stream/students");
+      
+      
+      source.onopen = function() {
+    	  console.log("Connection to server opened.");
+    	};
+      
+      source.addEventListener('error', function (e) {
+    	  console.log('error: ' + source.readyState);
+      }, false);
+      
+      source.addEventListener('message', function (e) {
+    	  console.log(e.data);
+          
+          // You can close the re-connection attempt
+          // if(body === 5)
+          //     source.close();
+      }, false);
+
+      return source;
+  }
+	  
+  function insertRow(student){
+	  
+		var html_data = $('#data-body').html();  
+		html_data += '<tr class="result"><td>'+student.name+' (new)</td><td>'+student.grade+'</td></tr>'; 
+		$('#data-body').html(html_data); 
+  }
+  
+  $(document).ready(function () {
+	  connectWs();	  // Web Socket ---> We are not using websocket in this demo
+	  // connectSse(); // SSE
+  });
+  
+  
+
+</script>
+
+</body>
+</html>

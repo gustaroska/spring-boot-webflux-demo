@@ -1,0 +1,26 @@
+server:
+  port: 9000
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          public-key-location: classpath:simple.pub
+  devtools:
+    add-properties: false
+  kafka:
+    bootstrap-servers: localhost:9092
+  thymeleaf:
+    reactive.max-chunk-size: 8192
+    cache: false
+  webflux:
+    static-path-pattern: /static/**
+    base-path: /app
+  redis:
+    host: localhost
+    port: 6379
+  r2dbc:
+    url: r2dbc:pool:mysql://localhost:3306/db_example
+    username: ${app.config.mysql.username}
+    password: ${app.config.mysql.password}
+  
