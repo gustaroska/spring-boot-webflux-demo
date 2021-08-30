@@ -10,10 +10,11 @@ public class WebSocketWrapper<T extends Object> {
 	public WebSocketWrapper(T body) {
 		// TODO Auto-generated constructor stub
 		this.body = body;
+		this.timestamp = LocalDateTime.now();
 	}
 	
 	public LocalDateTime getTimestamp() {
-		return LocalDateTime.now();
+		return this.timestamp;
 	}
 	public void setTimestamp(LocalDateTime timestamp) {
 		this.timestamp = timestamp;

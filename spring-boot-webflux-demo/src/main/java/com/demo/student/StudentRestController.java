@@ -82,7 +82,7 @@ public class StudentRestController {
     }
 	
 	@GetMapping
-    public  Mono<ResponseEntity<ResponseWrapperList>> list(
+    public  Mono<ResponseEntity<ResponseWrapperList>> getListByParam(
     		@RequestParam(name = "name", required = false) String name) {
 		Mono<List<Student>> result = studentRepository.findByName("%"+name+"%").collectList();
         
@@ -93,7 +93,7 @@ public class StudentRestController {
 	
 	
 	@PostMapping
-    public Mono<ResponseEntity<ResponseWrapper>> add(
+    public Mono<ResponseEntity<ResponseWrapper>> create(
     		@RequestParam(name = "action", required = false) String action, // available action: SUBMIT
     		@RequestBody Student student) {
 		
